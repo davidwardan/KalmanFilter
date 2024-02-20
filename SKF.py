@@ -45,37 +45,41 @@ for i in range(1, len(t)):
 # Create observations from hidden states
 observations = []
 for i in range(1,len(hidden_states)):
-    y = observation_matrix @ hidden_states[i] + np.random.normal(0, observation_error_cov)
+    y = observation_matrix @ hidden_states[i] + np.random.normal(0, 1)
     observations.append(y[0][0])
 
 # Apply switching kalman filter
 M1 = []
 M2 = []
 probability = [knowledge_probability]
+pred_mean_s1 = [knowledge_mean]
+pred_cov_s1 = [knowledge_cov]
+pred_mean_s2 = [knowledge_mean]
+pred_cov_s2 = [knowledge_cov]
 pred_mean = [knowledge_mean]
 pred_cov = [knowledge_cov]
 # Loop through the observations
 for i in range(len(observations)):
     # apply kalman filter for regime 1 to regime 1
-    states_1_1 = kalman_filter(i, knowledge_mean, knowledge_cov, transition_matrix_1, observation_matrix,
+    states_1_1 = kalman_filter(i, pred_mean_s1[-1], pred_cov_s1[-1], transition_matrix_1, observation_matrix,
                                         observation_error_cov, model_error_cov_1_1, observations)
     likelihood_1_1 = norm.pdf(observations[i], (observation_matrix @ states_1_1[0]),
                                 np.sqrt((observation_matrix @ states_1_1[1] @ np.transpose(observation_matrix) + observation_error_cov)))
 
     # apply kalman filter for regime 1 to regime 2
-    states_1_2 = kalman_filter(i, knowledge_mean, knowledge_cov, transition_matrix_2, observation_matrix,
+    states_1_2 = kalman_filter(i, pred_mean_s1[-1], pred_cov_s1[-1], transition_matrix_1, observation_matrix,
                                         observation_error_cov, model_error_cov_1_2, observations)
     likelihood_1_2 = norm.pdf(observations[i], (observation_matrix @ states_1_2[0]),
                                 np.sqrt((observation_matrix @ states_1_2[1] @ np.transpose(observation_matrix) + observation_error_cov)))
 
     # apply kalman filter for regime 2 to regime 2
-    states_2_2 = kalman_filter(i, knowledge_mean, knowledge_cov, transition_matrix_2, observation_matrix,
+    states_2_2 = kalman_filter(i, pred_mean_s2[-1], pred_cov_s2[-1], transition_matrix_2, observation_matrix,
                                         observation_error_cov, model_error_cov_2_2, observations)
     likelihood_2_2 = norm.pdf(observations[i], (observation_matrix @ states_2_2[0]),
                                 np.sqrt((observation_matrix @ states_2_2[1] @ np.transpose(observation_matrix) + observation_error_cov)))
 
     # apply kalman filter for regime 2 to regime 1
-    states_2_1 = kalman_filter(i, knowledge_mean, knowledge_cov, transition_matrix_1, observation_matrix,
+    states_2_1 = kalman_filter(i, pred_mean_s2[-1], pred_cov_s2[-1], transition_matrix_2, observation_matrix,
                                         observation_error_cov, model_error_cov_2_1, observations)
     likelihood_2_1 = norm.pdf(observations[i], (observation_matrix @ states_2_1[0]),
                                 np.sqrt((observation_matrix @ states_2_1[1] @ np.transpose(observation_matrix) + observation_error_cov)))
@@ -110,6 +114,8 @@ for i in range(len(observations)):
     mu = np.squeeze(states_1_1[2]-posterior_mean_1)
     posterior_cov_1 = (w_1_1 * (states_1_1[3] + mu@mu.T)
                        + w_2_1 * (states_2_1[3] + mu@mu.T))
+    pred_mean_s1.append(posterior_mean_1)
+    pred_cov_s1.append(posterior_cov_1)
 
     # get the posterior mean and covariance for regime 2
     w_1_2 = M_1_2 / (M_1_2 + M_2_2)
@@ -118,6 +124,8 @@ for i in range(len(observations)):
     mu = np.squeeze(states_1_2[2]-posterior_mean_2)
     posterior_cov_2 = (w_1_2 * (states_1_2[3] + mu@mu.T)
                        + w_2_2 * (states_2_2[3] + mu@mu.T))
+    pred_mean_s2.append(posterior_mean_2)
+    pred_cov_s2.append(posterior_cov_2)
 
     # get the new knowledge mean and covariance
     knowledge_mean = knowledge_probability[0] * posterior_mean_1 + knowledge_probability[1] * posterior_mean_2
@@ -127,20 +135,21 @@ for i in range(len(observations)):
     pred_cov.append(knowledge_cov)
 
 # plot the porbabilities
-figure3, axis = plt.subplots()
+figure1, axis = plt.subplots()
 axis.plot(np.arange(1, len(t)), M1, label='Regime 1', color='red', marker='o', markersize=2)
 axis.plot(np.arange(1, len(t)), M2, label='Regime 2', color='blue', marker='o', markersize=2)
 axis.legend()
 
 # plot first hidden state and observations
-figure1, axis = plt.subplots()
+figure2, axis = plt.subplots()
 axis.plot(t, [i[0][0] for i in pred_mean], label='Predicted Mean', color='red', marker='o', markersize=2)
 axis.scatter(t[1:], observations, label='Observations', color='green', marker='s', s=10)
+axis.fill_between(t, [i[0][0] - math.sqrt(j[0][0]) for i, j in zip(pred_mean, pred_cov)], [i[0][0] + math.sqrt(j[0][0]) for i, j in zip(pred_mean, pred_cov)], color='red', alpha=0.2)
 axis.legend()
-plt.show()
 
 # plot second hidden state
-# figure2, axis = plt.subplots()
-# axis.plot(np.arange(0, 501), [i[1][0] for i in pred_mean], label='Predicted Mean', color='red', marker='o', markersize=2)
-# axis.legend()
-# plt.show()
+figure3, axis = plt.subplots()
+axis.plot(t, [i[1][0] for i in pred_mean], label='Predicted Mean', color='red', marker='o', markersize=2)
+axis.fill_between(t, [i[1][0] - math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)], [i[1][0] + math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)], color='red', alpha=0.2)
+axis.legend()
+plt.show()
