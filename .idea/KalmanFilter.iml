@@ -11,4 +11,7 @@
     <option name="removeUnused" value="true" />
     <option name="modifyBaseFiles" value="true" />
   </component>
+  <component name="SonarLintModuleSettings">
+    <option name="uniqueId" value="7badae14-0c6d-4a01-93e9-03e547dd7672" />
+  </component>
 </module>
