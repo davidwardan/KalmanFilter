@@ -165,5 +165,3 @@ axis.plot(t, [i[1][0] for i in pred_mean], label='Predicted Mean', color='steelb
 axis.fill_between(t, [i[1][0] - math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)], [i[1][0] + math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)], color='darkorange', alpha=0.5)
 axis.legend()
 plt.show()
-
-

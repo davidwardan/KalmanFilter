@@ -23,11 +23,11 @@ observation_error_cov = 1**2
 t = np.arange(0, 3)
 
 # create observations from hidden states
-# np.random.seed(235)
+np.random.seed(235)
 
 hidden_states = [knowledge_mean]
 for i in range(1, len(t)):
-    hidden_states.append(transition_matrix @ hidden_states[i-1] + np.random.normal(0, 0.001))
+    hidden_states.append(transition_matrix @ hidden_states[i-1] + np.random.multivariate_normal([0, 0], model_error_cov))
 observations = []
 for i in range(1,len(hidden_states)):
     y = observation_matrix @ hidden_states[i] + np.random.normal(0, observation_error_cov)
