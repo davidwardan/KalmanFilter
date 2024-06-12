@@ -14,6 +14,14 @@ def gaussian_mixture(mu1, mu2, cov1, cov2, p1, p2):
 
     return mean, cov
 
+# define a function to generate data
+def gen_data(n,R):
+    np.random.seed(0)
+    t = np.linspace(0, n, n)
+    z = t + np.random.normal(0, R[0], n)
+
+    return z, t
+
 
 
 

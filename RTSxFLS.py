@@ -16,7 +16,7 @@ def filter(A, Q, C, R, x, P, z):
     # update step of KF (a posteriori estimate)
     K = P_pred @ C.T @ np.linalg.pinv(C @ P_pred @ C.T + R) # Standard Kalman gain
     x_filt = x_pred + K @ (z - C @ x_pred) # filtered state
-    P_filt = P_pred - K @ C @ P_pred# filtered state covariance matrix
+    P_filt = P_pred - K @ C @ P_pred # filtered state covariance matrix
     
     return x_filt, P_filt, x_pred, P_pred
 
@@ -35,7 +35,7 @@ N = 10 # lag window size
 A = np.array([[1, 1], [0, 1]]) # train matrix
 Q = np.array([[0.25, 0.5], [0.5, 1]]) * 0.1**2 # transition covariance matrix
 C = np.array([[1, 0]]) # observation matrix
-R = np.array([[2]]) # observation covariance matrix
+R = np.array([[4]]) # observation covariance matrix
 
 x = np.array([1, -1]) # initial state
 P = np.array([[2**2, 0],
@@ -77,21 +77,6 @@ while i <= len(z)-1:
         buffer_x_pred = [x[1]]
         buffer_P_pred = [P[1]]
 
-        # add the new state
-        # buffer_x.append(x[-1])
-        # buffer_P.append(P[-1])
-        # buffer_x_pred.append(x[-1])
-        # buffer_P_pred.append(P[-1])
-        #
-        # # x = x[1]
-        # # P = P[1]
-        #
-        # # remove the oldest state
-        # buffer_x.pop(0)
-        # buffer_P.pop(0)
-        # buffer_x_pred.pop(0)
-        # buffer_P_pred.pop(0)
-
         # update i
         i = i - N + 2
         j = 0
@@ -104,20 +89,30 @@ while i <= len(z)-1:
         x_final.extend(buffer_x)
         P_final.extend(buffer_P)
 
-
 x = np.array(x_final)[:, 0]
 P = np.array(P_final)[:, 0, 0]
 
-print(len(x))
-
-
 t = range(len(z)+1)
 # plot results
-plt.figure(figsize=(10, 6))
+# plt.figure(figsize=(10, 6))
 plt.scatter(t[1:], z, label='Observations', color='steelblue')
-plt.plot(t, x, label='FLS states', color='red')
-plt.fill_between(t, x - np.sqrt(P), x + np.sqrt(P), color='r', alpha=0.2)
+plt.plot(t, x, label='RTSxFLS states $N$='+str(N), color='green')
+plt.fill_between(t, x - 2*np.sqrt(P), x + 2*np.sqrt(P), color='g', alpha=0.2)
 plt.xlabel('Time')
 plt.ylabel('Value')
+# plt.title('First State')
+plt.legend(loc='upper left', fontsize=12)
+plt.savefig('FLSxRTS.png', dpi=300, bbox_inches='tight')
+
+x = np.array(x_final)[:, 1]
+P = np.array(P_final)[:, 1, 1]
+
+# plot results
+plt.figure(figsize=(10, 6))
+plt.plot(t, x, label='FLS states', color='red')
+plt.fill_between(t, x - 2*np.sqrt(P), x + 2*np.sqrt(P), color='r', alpha=0.2)
+plt.xlabel('Time')
+plt.ylabel('Value')
+plt.title('Second State')
 plt.legend()
 plt.show()

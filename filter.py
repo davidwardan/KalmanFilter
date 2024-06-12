@@ -35,7 +35,7 @@ def kalman_filter(knowledge_mean, knowledge_cov, transition_matrix, observation_
     return [prior_mean, prior_cov, posterior_mean, posterior_cov]
 
 # Define function to apply filter and smoother
-def apply_filter(t, knowledge_mean, knowledge_cov, transition_matrix, observation_matrix, observation_error_cov, model_error_cov, observations, smoothing = False, lag = None):
+def apply_filter(t, knowledge_mean, knowledge_cov, transition_matrix, observation_matrix, observation_error_cov, model_error_cov, observations, smoothing = False):
     # Apply kalman filter
     prior_mean = []
     prior_cov = []
@@ -59,19 +59,19 @@ def apply_filter(t, knowledge_mean, knowledge_cov, transition_matrix, observatio
         buffer_mean.append(states[2])
         buffer_cov.append(states[3])
 
-        # Apply fixed-lag smoothing
-        if smoothing is True and lag is not None:
-        # once we have observation up to the lag, we can start smoothing
-        # we will start from the last observation and smooth the states up to the lag
-            if len(buffer_mean) >= lag:
-                for j in range(i-1, i-lag, -1):
-                    mean_smooth, cov_smooth = smooth(buffer_mean[j], buffer_cov[j], pred_mean[j+1], pred_cov[j+1], prior_mean[j], prior_cov[j], transition_matrix)
-                    pred_mean[j] = mean_smooth
-                    pred_cov[j] = cov_smooth
+        # # Apply fixed-lag smoothing
+        # if smoothing is True and lag is not None:
+        # # once we have observation up to the lag, we can start smoothing
+        # # we will start from the last observation and smooth the states up to the lag
+        #     if len(buffer_mean) >= lag:
+        #         for j in range(i-1, i-lag, -1):
+        #             mean_smooth, cov_smooth = smooth(buffer_mean[j], buffer_cov[j], pred_mean[j+1], pred_cov[j+1], prior_mean[j], prior_cov[j], transition_matrix)
+        #             pred_mean[j] = mean_smooth
+        #             pred_cov[j] = cov_smooth
 
 
     # Apply regular smoothing
-    if smoothing is True and lag is None:
+    if smoothing is True:
         for j in range(len(observations)-1, -1, -1):
             mean_smooth, cov_smooth = smooth(pred_mean[j], pred_cov[j], pred_mean[j+1], pred_cov[j+1], prior_mean[j], prior_cov[j], transition_matrix)
             pred_mean[j] = mean_smooth
