@@ -116,3 +116,4 @@ class FixLagSmoother:
 #TODO: Prepare the class for the online smoother
 class OnlineSmoother:
     '''Online smoother class based on implementing RTS in fixed-lag smoother'''
+    '''The online smoother will be implemented in the next version of the code. Now you can use RTSxFLS.py'''

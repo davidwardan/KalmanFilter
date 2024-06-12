@@ -1,8 +1,7 @@
 # improt libraries
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy.stats import norm
-import math
+
+
 # define gaussian mixture function
 def gaussian_mixture(mu1, mu2, cov1, cov2, p1, p2):
     # get the mean
@@ -21,12 +20,3 @@ def gen_data(n,R):
     z = t + np.random.normal(0, R[0], n)
 
     return z, t
-
-
-
-
-
-
-
-
-

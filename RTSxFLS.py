@@ -1,7 +1,6 @@
 # import libraries
-import numpy as np
 import matplotlib.pyplot as plt
-import math
+import numpy as np
 
 # set plot parameters
 plt.rcParams.update({'font.size': 16})
