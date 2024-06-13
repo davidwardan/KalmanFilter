@@ -1,3 +1,10 @@
+"""
+This module contains the functions to implement the Kalman filter, and smoother
+This represents my previous work on the Kalman filter and smoother.
+This work is not optimized and is now only used in SKF.py
+In future versions, this code will be removed.
+"""
+
 # import libraries
 import numpy as np
 
@@ -67,15 +74,11 @@ def apply_filter(t, knowledge_mean, knowledge_cov, transition_matrix, observatio
         buffer_mean.append(states[2])
         buffer_cov.append(states[3])
 
-        # # Apply fixed-lag smoothing
-        # if smoothing is True and lag is not None:
-        # # once we have observation up to the lag, we can start smoothing
-        # # we will start from the last observation and smooth the states up to the lag
-        #     if len(buffer_mean) >= lag:
-        #         for j in range(i-1, i-lag, -1):
-        #             mean_smooth, cov_smooth = smooth(buffer_mean[j], buffer_cov[j], pred_mean[j+1], pred_cov[j+1], prior_mean[j], prior_cov[j], transition_matrix)
-        #             pred_mean[j] = mean_smooth
-        #             pred_cov[j] = cov_smooth
+        # # Apply fixed-lag smoothing if smoothing is True and lag is not None: # once we have observation up to the
+        # lag, we can start smoothing # we will start from the last observation and smooth the states up to the lag
+        # if len(buffer_mean) >= lag: for j in range(i-1, i-lag, -1): mean_smooth, cov_smooth = smooth(buffer_mean[
+        # j], buffer_cov[j], pred_mean[j+1], pred_cov[j+1], prior_mean[j], prior_cov[j], transition_matrix)
+        # pred_mean[j] = mean_smooth pred_cov[j] = cov_smooth
 
     # Apply regular smoothing
     if smoothing is True:
