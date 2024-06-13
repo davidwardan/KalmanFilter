@@ -1,19 +1,29 @@
 # import libraries
-import numpy as np
-import matplotlib.pyplot as plt
 import math
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.stats import norm
 
 # import needed functions
 from filter import kalman_filter
 from helper_functions import gaussian_mixture
 
-# np.random.seed(235)
+# set plot parameters
+plt.rcParams.update({'font.size': 16})
+plt.rcParams['text.usetex'] = True
+
+# create out directory if it does not exist
+if not os.path.exists('out'):
+    os.makedirs('out')
+
+np.random.seed(235)
 
 # create dataset from given
 knowledge_mean = np.array([[10], [0]])
-knowledge_cov = np.array([[4**2, 0],
-                          [0, 0.001**2]])
+knowledge_cov = np.array([[4 ** 2, 0],
+                          [0, 0.001 ** 2]])
 knowledge_probability = np.array([[0.95], [0.05]])
 
 transition_matrix_1 = np.array([[1, 0],
@@ -24,14 +34,14 @@ transition_matrix_2 = np.array([[1, 1],
 model_error_cov_1_1, model_error_cov_2_2, model_error_cov_2_1 = 0, 0, 0
 
 model_error_cov_1_2 = np.array([[0, 0],
-                                [0, (2.3*10**-4)**2]])
+                                [0, (2.3 * 10 ** -4) ** 2]])
 
 observation_matrix = np.array([[1, 0]])
-observation_error_cov = 1**2
+observation_error_cov = 1 ** 2
 
-# create time steps with 5 seconds interval
+# create time steps with 5-second interval
 t = np.arange(0, 200)
-t_switch = int(len(t)/2)
+t_switch = int(len(t) / 2)
 
 # Create probability transition matrix
 Z = np.array([[0.997, 0.003],
@@ -76,31 +86,36 @@ pred_cov = [knowledge_cov]
 for i in range(len(observations)):
     # apply kalman filter for regime 1 to regime 1
     states_1_1 = kalman_filter(pred_mean_s1[-1], pred_cov_s1[-1], transition_matrix_1, observation_matrix,
-                                        observation_error_cov, model_error_cov_1_1, observations[i])
+                               observation_error_cov, model_error_cov_1_1, observations[i])
     likelihood_1_1 = norm.pdf(observations[i], (observation_matrix @ states_1_1[0]),
-                                np.sqrt((observation_matrix @ states_1_1[1] @ observation_matrix.T + observation_error_cov)))
+                              np.sqrt(
+                                  (observation_matrix @ states_1_1[1] @ observation_matrix.T + observation_error_cov)))
 
     # apply kalman filter for regime 1 to regime 2
     states_1_2 = kalman_filter(pred_mean_s1[-1], pred_cov_s1[-1], transition_matrix_1, observation_matrix,
-                                        observation_error_cov, model_error_cov_1_2, observations[i])
+                               observation_error_cov, model_error_cov_1_2, observations[i])
     likelihood_1_2 = norm.pdf(observations[i], (observation_matrix @ states_1_2[0]),
-                                np.sqrt((observation_matrix @ states_1_2[1] @ observation_matrix.T + observation_error_cov)))
+                              np.sqrt(
+                                  (observation_matrix @ states_1_2[1] @ observation_matrix.T + observation_error_cov)))
 
     # apply kalman filter for regime 2 to regime 2
     states_2_2 = kalman_filter(pred_mean_s2[-1], pred_cov_s2[-1], transition_matrix_2, observation_matrix,
-                                        observation_error_cov, model_error_cov_2_2, observations[i])
+                               observation_error_cov, model_error_cov_2_2, observations[i])
     likelihood_2_2 = norm.pdf(observations[i], (observation_matrix @ states_2_2[0]),
-                                np.sqrt((observation_matrix @ states_2_2[1] @ observation_matrix.T + observation_error_cov)))
+                              np.sqrt(
+                                  (observation_matrix @ states_2_2[1] @ observation_matrix.T + observation_error_cov)))
 
     # apply kalman filter for regime 2 to regime 1
     states_2_1 = kalman_filter(pred_mean_s2[-1], pred_cov_s2[-1], transition_matrix_2, observation_matrix,
-                                        observation_error_cov, model_error_cov_2_1, observations[i])
+                               observation_error_cov, model_error_cov_2_1, observations[i])
     likelihood_2_1 = norm.pdf(observations[i], (observation_matrix @ states_2_1[0]),
-                                np.sqrt((observation_matrix @ states_2_1[1] @ observation_matrix.T + observation_error_cov)))
+                              np.sqrt(
+                                  (observation_matrix @ states_2_1[1] @ observation_matrix.T + observation_error_cov)))
 
     # calculate the joint posterior probability for regime 1 to regime 1
     M_sum = (likelihood_1_1 * Z[0][0] * knowledge_probability[0] + likelihood_1_2 * Z[0][1] * knowledge_probability[1]
-             + likelihood_2_1 * Z[1][0] * knowledge_probability[0] + likelihood_2_2 * Z[1][1] * knowledge_probability[1])
+             + likelihood_2_1 * Z[1][0] * knowledge_probability[0] + likelihood_2_2 * Z[1][1] * knowledge_probability[
+                 1])
 
     M_1_1 = likelihood_1_1 * Z[0][0] * knowledge_probability[0] / M_sum
 
@@ -126,21 +141,25 @@ for i in range(len(observations)):
     # get the posterior mean and covariance for regime 1
     w_1_1 = M_1_1 / (M_1_1 + M_2_1)
     w_2_1 = M_2_1 / (M_1_1 + M_2_1)
-    posterior_mean_1, posterior_cov_1 = gaussian_mixture(states_1_1[2], states_2_1[2], states_1_1[3], states_2_1[3], w_1_1, w_2_1)
+    posterior_mean_1, posterior_cov_1 = gaussian_mixture(states_1_1[2], states_2_1[2], states_1_1[3], states_2_1[3],
+                                                         w_1_1, w_2_1)
     pred_mean_s1.append(posterior_mean_1)
     pred_cov_s1.append(posterior_cov_1)
 
     # get the posterior mean and covariance for regime 2
     w_1_2 = M_1_2 / (M_1_2 + M_2_2)
     w_2_2 = M_2_2 / (M_1_2 + M_2_2)
-    posterior_mean_2, posterior_cov_2 = gaussian_mixture(states_1_2[2], states_2_2[2], states_1_2[3], states_2_2[3], w_1_2, w_2_2)
+    posterior_mean_2, posterior_cov_2 = gaussian_mixture(states_1_2[2], states_2_2[2], states_1_2[3], states_2_2[3],
+                                                         w_1_2, w_2_2)
     pred_mean_s2.append(posterior_mean_2)
     pred_cov_s2.append(posterior_cov_2)
     # print(sum([w_1_1, w_2_2, w_1_2, w_2_1])) # check if the probabilities are correct sum to 2
 
     # get the new knowledge mean and covariance
     # print(knowledge_probability[0]+knowledge_probability[1]) # check if the sum of the probabilities is 1
-    knowledge_mean, knowledge_cov = gaussian_mixture(posterior_mean_1, posterior_mean_2, posterior_cov_1, posterior_cov_2, knowledge_probability[0], knowledge_probability[1])
+    knowledge_mean, knowledge_cov = gaussian_mixture(posterior_mean_1, posterior_mean_2, posterior_cov_1,
+                                                     posterior_cov_2, knowledge_probability[0],
+                                                     knowledge_probability[1])
     pred_mean.append(knowledge_mean)
     pred_cov.append(knowledge_cov)
 
@@ -154,7 +173,8 @@ axis.legend()
 figure2, axis = plt.subplots()
 axis.plot(t, [i[0][0] for i in pred_mean], label='Predicted Mean', color='steelblue', marker='o', markersize=1)
 axis.scatter(t[1:], observations, label='Observations', color='darkgreen', marker='s', s=1)
-axis.fill_between(t, [i[0][0] - math.sqrt(j[0][0]) for i, j in zip(pred_mean, pred_cov)], [i[0][0] + math.sqrt(j[0][0]) for i, j in zip(pred_mean, pred_cov)], color='darkorange', alpha=0.5)
+axis.fill_between(t, [i[0][0] - math.sqrt(j[0][0]) for i, j in zip(pred_mean, pred_cov)],
+                  [i[0][0] + math.sqrt(j[0][0]) for i, j in zip(pred_mean, pred_cov)], color='darkorange', alpha=0.5)
 axis.set_ylim(-20, 60)
 axis.plot(t[1:], obs_crt, color='red', markersize=2, linestyle='--')
 axis.legend()
@@ -162,6 +182,7 @@ axis.legend()
 # plot second hidden state
 figure3, axis = plt.subplots()
 axis.plot(t, [i[1][0] for i in pred_mean], label='Predicted Mean', color='steelblue', marker='o', markersize=2)
-axis.fill_between(t, [i[1][0] - math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)], [i[1][0] + math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)], color='darkorange', alpha=0.5)
+axis.fill_between(t, [i[1][0] - math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)],
+                  [i[1][0] + math.sqrt(j[1][1]) for i, j in zip(pred_mean, pred_cov)], color='darkorange', alpha=0.5)
 axis.legend()
 plt.show()
